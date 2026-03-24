@@ -1,0 +1,28 @@
+# Datasets
+*.csv
+*.h5
+*.zip
+*.tar
+*.tar.gz
+
+# Model weights
+*.pth
+*.pt
+*.pkl
+*.h5
+*.ckpt
+# Large data folders
+data/
+dataset/
+datasets/
+archive/
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment
+.env
+*.egg-info/
