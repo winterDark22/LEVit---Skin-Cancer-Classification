@@ -1,166 +1,130 @@
-# LEVit-Skin: Reproducing and Improving a Balanced and Interpretable Transformer-CNN Model for Multi-Class Skin Cancer Diagnosis
+# LEVit-Skin: Skin Cancer Classification on HAM10000
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-orange)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Status](https://img.shields.io/badge/Status-In%20Progress-yellow)
+Reproduction of the LEVit-Skin paper — a hybrid Transformer-CNN model for multi-class skin cancer diagnosis using the HAM10000 dataset.
 
----
-
-## 📌 Overview
-
-This repository contains the reproduction and improvement of **LEVit-Skin**, a hybrid Transformer-CNN architecture designed for balanced, interpretable, and accurate **multi-class skin cancer diagnosis** using dermoscopic images.
-
-The original paper proposes a lightweight vision transformer model that combines the local feature extraction power of CNNs with the global context awareness of Vision Transformers (ViT), specifically tailored for skin lesion classification.
+**Authors:** Sadia Tabassum (1905091) · Md. Azizul Haque Nadim (1905059)  
+**Course:** CSE Machine Learning Project · April 2026
 
 ---
 
-## 📄 Original Paper
+## Overview
 
-> **LEVit-Skin: A balanced and interpretable transformer-CNN model for multi-class skin cancer diagnosis**
+This project reproduces the pipeline from:
+> Sakib et al., "LEVit-Skin: A balanced and interpretable transformer-CNN model for multi-class skin cancer diagnosis," IJSRA, vol. 15, no. 01, 2025.
 
----
-
-## 🗂️ Dataset
-
-This project uses the **HAM10000 (Human Against Machine with 10000 training images)** dataset.
-
-### Download the dataset:
-1. Go to [Kaggle - HAM10000](https://www.kaggle.com/datasets/kmader/skin-lesion-analysis-toward-melanoma-detection)
-2. Download and extract into the project folder
-
-### Dataset Classes:
-| Label | Disease |
-|-------|---------|
-| `mel` | Melanoma |
-| `nv` | Melanocytic Nevi |
-| `bcc` | Basal Cell Carcinoma |
-| `akiec` | Actinic Keratoses |
-| `bkl` | Benign Keratosis |
-| `df` | Dermatofibroma |
-| `vasc` | Vascular Lesions |
+The model classifies dermoscopic images into 7 skin lesion categories using LEViT-256 (pretrained on ImageNet), augmentation-based oversampling to handle class imbalance, and Grad-CAM for interpretability.
 
 ---
 
-## 🏗️ Project Structure
+## Dataset
 
-```
-project_ham10000/
-│
-├── HAM_project.ipynb       # Main notebook (training, evaluation, visualization)
-├── results                 # Evaluation results and metrics
-├── .gitignore              # Ignoring large files (datasets, model weights)
-└── README.md               # Project documentation
-```
+**HAM10000** — 10,015 dermoscopic images across 7 classes:
 
-> ⚠️ **Note:** Dataset files and model weights are not included in this repository due to size constraints. Please download them separately (see Dataset section above).
+| Code | Full Name | Count | Type |
+|------|-----------|-------|------|
+| nv | Melanocytic nevi | 6,705 | Benign |
+| mel | Melanoma | 1,113 | Malignant |
+| bkl | Benign keratosis | 1,099 | Benign |
+| bcc | Basal cell carcinoma | 514 | Malignant |
+| akiec | Actinic keratoses | 327 | Pre-malignant |
+| vasc | Vascular lesions | 142 | Benign |
+| df | Dermatofibroma | 115 | Benign |
 
----
-
-## 🧠 Model Architecture
-
-**LEVit-Skin** is a hybrid model combining:
-- **CNN layers** — for local feature extraction from dermoscopic images
-- **Vision Transformer (ViT/LeViT)** — for global context and attention
-- **Interpretability module** — for generating attention/saliency maps
-
-Key features:
-- Handles **class imbalance** in skin lesion datasets
-- Produces **interpretable predictions** via attention visualization
-- Lightweight and efficient for medical imaging tasks
+The dataset has a severe class imbalance (58:1 ratio). Splits are done at the lesion-ID level to prevent data leakage.
 
 ---
 
-## ⚙️ Requirements
+## Methodology
 
-```bash
-pip install -r requirements.txt
-```
-
-### Main Dependencies:
-- Python 3.8+
-- PyTorch 2.0+
-- torchvision
-- timm
-- numpy
-- pandas
-- matplotlib
-- scikit-learn
-- Pillow
-- jupyter
+- **Preprocessing:** Resized to 224x224, normalized with dataset-specific mean/std
+- **Augmentation:** Random rotation, flips, crop, brightness/contrast, shear, sigmoid intensity correction
+- **Oversampling:** Minority classes upsampled to 6,705 samples each (training set: 46,935 images)
+- **Model:** Pretrained LEViT-256 from `timm`, classification head replaced for 7 classes
+- **Training:**
+  - Phase 1 (5 epochs): Frozen backbone, head only — LR 1e-3
+  - Phase 2 (15 epochs): Full fine-tuning — LR 1e-4
+- **Validation:** 2-fold cross-validation split on lesion IDs
 
 ---
 
-## 🚀 How to Run
+## Results
 
-### 1. Clone the repository
+| | Accuracy | F1 | Specificity | MCC | PR-AUC |
+|--|--|--|--|--|--|
+| Fold 1 | 0.7151 | 0.6946 | 0.9525 | 0.6836 | 0.8414 |
+| Fold 2 | 0.7339 | 0.7148 | 0.9557 | 0.7007 | 0.8373 |
+| **Mean** | **0.7245** | **0.7047** | **0.9541** | **0.6922** | **0.8394** |
+| Paper (10-fold) | — | 0.9611 | 0.9629 | 0.9551 | 0.9662 |
+
+The gap from the paper is primarily due to using 2-fold instead of 10-fold CV (50% vs 90% training data per fold) and limited training epochs. Specificity nearly matches the paper's reported value.
+
+---
+
+## Repository Contents
+
+| File | Description |
+|------|-------------|
+| `ham10000.ipynb` | Main notebook — full training and evaluation pipeline |
+| `confusion_matrix.png` | Aggregated confusion matrix over both folds |
+| `learning_curves.png` | Training/validation loss and accuracy curves |
+| `gradcam_visualization.png` | Grad-CAM heatmaps for one sample per class |
+| `report.pdf` | Full project report |
+| `paper.pdf` | Original LEVit-Skin paper |
+| `presentation.pdf` | Project presentation slides |
+
+---
+
+## Setup and Run
+
+**1. Clone the repository**
 ```bash
 git clone https://github.com/winterDark22/LEVit---Skin-Cancer-Classification.git
 cd LEVit---Skin-Cancer-Classification
 ```
 
-### 2. Install dependencies
+**2. Install dependencies**
 ```bash
-pip install -r requirements.txt
+pip install torch torchvision timm numpy pandas matplotlib scikit-learn opencv-python
 ```
 
-### 3. Download the dataset
-Download HAM10000 from Kaggle and place it in the project folder.
+**3. Download the HAM10000 dataset**
 
-### 4. Run the notebook
+Download from [Kaggle](https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000) and place it in your project directory:
+```
+project/
+  HAM10000_images_part_1/
+  HAM10000_images_part_2/
+  HAM10000_metadata.csv
+```
+
+**4. Run the notebook**
 ```bash
-jupyter notebook HAM_project.ipynb
+jupyter notebook ham10000.ipynb
+```
+
+Run all cells from top to bottom. The notebook handles preprocessing, oversampling, training (both phases), evaluation, and Grad-CAM visualization automatically.
+
+---
+
+## Requirements
+
+```
+torch
+timm>=1.0.25
+torchvision
+numpy
+pandas
+matplotlib
+scikit-learn
+opencv-python
 ```
 
 ---
 
-## 📊 Results
+## References
 
-| Metric | Score |
-|--------|-------|
-| Accuracy | TBD |
-| F1-Score | TBD |
-| AUC-ROC | TBD |
-| Balanced Accuracy | TBD |
-
-> Results will be updated after full training and evaluation.
-
----
-
-## 🔍 Improvements Over Original Paper
-
-- [ ] Data augmentation strategies for class imbalance
-- [ ] Hyperparameter tuning
-- [ ] Additional interpretability methods (GradCAM, SHAP)
-- [ ] Comparison with other baseline models
-
----
-
-## 📁 What's Not Included (Due to Size)
-
-| File/Folder | Reason |
-|-------------|--------|
-| `archive/` (dataset) | Too large (GBs) — download from Kaggle |
-| `best_model.pth` | Large model weights |
-| `*.csv` dataset files | Large data files |
-
----
-
-## 👤 Author
-
-**winterDark22**
-- GitHub: [@winterDark22](https://github.com/winterDark22)
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License.
-
----
-
-## 🙏 Acknowledgements
-
-- Original LEVit-Skin paper authors
-- [HAM10000 Dataset](https://www.kaggle.com/datasets/kmader/skin-lesion-analysis-toward-melanoma-detection) — ISIC Archive
-- [timm library](https://github.com/huggingface/pytorch-image-models) for Vision Transformer implementations
+1. Sakib et al., "LEVit-Skin," IJSRA, vol. 15, no. 01, 2025.
+2. Tschandl et al., "The HAM10000 dataset," Scientific Data, 2018.
+3. Graham, "LeViT: a Vision Transformer in ConvNet's Clothing," ICCV, 2021.
+4. Selvaraju et al., "Grad-CAM," ICCV, 2017.
+5. Wightman, "PyTorch Image Models (timm)," 2019.
